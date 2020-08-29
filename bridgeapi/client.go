@@ -2,6 +2,7 @@ package bridgeapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,13 +29,13 @@ type Auth struct {
 	accessToken string
 }
 
-func NewClient(httpClient *http.Client, auth *Auth) (*Client, error) {
+func NewClient(ctx context.Context, httpClient *http.Client, auth *Auth) (*Client, error) {
 	client := &Client{
 		httpClient: httpClient,
 		auth:       auth,
 	}
 	if client.auth.accessToken == "" {
-		err := client.login()
+		err := client.login(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -43,8 +44,8 @@ func NewClient(httpClient *http.Client, auth *Auth) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) createRequest(method string, endpoint string, body []byte) (*http.Request, error) {
-	req, err := http.NewRequest(method, baseURL+endpoint, bytes.NewReader(body))
+func (c *Client) createRequest(ctx context.Context, method string, endpoint string, body []byte) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, baseURL+endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (c *Client) createRequest(method string, endpoint string, body []byte) (*ht
 	return req, nil
 }
 
-func (c *Client) login() error {
+func (c *Client) login(ctx context.Context) error {
 	var request struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -72,7 +73,7 @@ func (c *Client) login() error {
 		return err
 	}
 
-	req, err := c.createRequest(http.MethodPost, "/v2/authenticate", reqData)
+	req, err := c.createRequest(ctx, http.MethodPost, "/v2/authenticate", reqData)
 	if err != nil {
 		return err
 	}

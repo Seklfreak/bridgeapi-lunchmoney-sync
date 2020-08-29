@@ -1,6 +1,7 @@
 package bridgeapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,9 +10,8 @@ import (
 	"time"
 )
 
-// TODO: context
-func (c *Client) fetchTransactions(endpoint string) (*TransactionsContainer, error) {
-	req, err := c.createRequest(http.MethodGet, endpoint, nil)
+func (c *Client) fetchTransactions(ctx context.Context, endpoint string) (*TransactionsContainer, error) {
+	req, err := c.createRequest(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +39,7 @@ func (c *Client) fetchTransactions(endpoint string) (*TransactionsContainer, err
 	return &transactions, nil
 }
 
-// TODO: context
-func (c *Client) FetchTransactionsUpdated(since time.Time) ([]*Transaction, error) {
+func (c *Client) FetchTransactionsUpdated(ctx context.Context, since time.Time) ([]*Transaction, error) {
 	var transactions []*Transaction
 
 	var endpoint string
@@ -52,7 +51,7 @@ func (c *Client) FetchTransactionsUpdated(since time.Time) ([]*Transaction, erro
 			endpoint = "/v2/transactions/updated?" + vars.Encode()
 		}
 
-		result, err := c.fetchTransactions(endpoint)
+		result, err := c.fetchTransactions(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}

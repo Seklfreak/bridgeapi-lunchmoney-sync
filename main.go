@@ -20,7 +20,7 @@ func main() {
 	}
 	ctx := context.Background()
 
-	bridgeClient, err := bridgeapi.NewClient(&http.Client{}, &bridgeapi.Auth{
+	bridgeClient, err := bridgeapi.NewClient(ctx, &http.Client{}, &bridgeapi.Auth{
 		ClientID:     os.Getenv("BRIDGEAPI_CLIENT_ID"),
 		ClientSecret: os.Getenv("BRIDGEAPI_CLIENT_SECRET"),
 		Email:        os.Getenv("BRIDGEAPI_EMAIL"),
@@ -40,7 +40,7 @@ func main() {
 	_ = assets
 
 	// fetch updated in last seven days
-	transactions, err := bridgeClient.FetchTransactionsUpdated(time.Now().Add(-7 * 24 * time.Hour))
+	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-7*24*time.Hour))
 	if err != nil {
 		logger.Fatal("failure fetching transactions from bridge", zap.Error(err))
 	}

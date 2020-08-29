@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var tags = []string{"bridgeapi-lunchmoney-sync"}
+
 func main() {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -81,17 +83,14 @@ func main() {
 		}
 
 		convertedTrxs = append(convertedTrxs, &lunchmoney.Transaction{
-			Date:        trx.Date,
-			Amount:      trx.Amount,
-			CategoryID:  0,
-			Payee:       trx.Description,
-			Currency:    strings.ToLower(trx.CurrencyCode),
-			AssetID:     assetID,
-			RecurringID: 0,
-			Notes:       notes,
-			Status:      "",
-			ExternalID:  strconv.FormatInt(trx.ID, 10),
-			Tags:        []string{"bridgeapi-lunchmoney-sync"},
+			Date:       trx.Date,
+			Amount:     trx.Amount,
+			Payee:      trx.Description,
+			Currency:   strings.ToLower(trx.CurrencyCode),
+			AssetID:    assetID,
+			Notes:      notes,
+			ExternalID: strconv.FormatInt(trx.ID, 10),
+			Tags:       tags,
 		})
 	}
 

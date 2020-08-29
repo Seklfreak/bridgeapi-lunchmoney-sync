@@ -1,7 +1,6 @@
 package lunchmoney
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -41,12 +40,10 @@ func (c *Client) InsertTransactions(ctx context.Context, trx []*Transaction) (in
 		return 0, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/v1/transactions", bytes.NewReader(reqData))
+	req, err := c.createRequest(ctx, http.MethodPost, "/v1/transactions", reqData)
 	if err != nil {
 		return 0, err
 	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", "Bearer "+c.accessToken)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

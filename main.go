@@ -32,6 +32,13 @@ func main() {
 
 	lunchmoneyClient := lunchmoney.NewClient(&http.Client{}, os.Getenv("LUNCHMONEY_ACCESS_TOKEN"))
 
+	// fetch lunchmoney assets
+	assets, err := lunchmoneyClient.GetAssets(ctx)
+	if err != nil {
+		logger.Fatal("failure fetching lunchmoney assets", zap.Error(err))
+	}
+	_ = assets
+
 	// fetch updated in last seven days
 	transactions, err := bridgeClient.FetchTransactionsUpdated(time.Now().Add(-7 * 24 * time.Hour))
 	if err != nil {
@@ -40,6 +47,7 @@ func main() {
 
 	logger.Info("received transactions", zap.Int("amount", len(transactions)))
 
+	// convert to lunchmoney transactions
 	var convertedTrxs []*lunchmoney.Transaction
 	var notes string
 	for _, trx := range transactions {
@@ -68,6 +76,7 @@ func main() {
 		}
 	}
 
+	// send to lunchmoney
 	inserted, err := lunchmoneyClient.InsertTransactions(ctx, convertedTrxs)
 	if err != nil {
 		logger.Fatal("failure inserting transactions to lunchmoney", zap.Error(err))

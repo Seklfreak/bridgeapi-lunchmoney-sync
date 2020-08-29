@@ -40,7 +40,6 @@ func main() {
 
 	logger.Info("received transactions", zap.Int("amount", len(transactions)))
 
-	// TODO: match asset ID with assets on LunchMoney
 	var convertedTrxs []*lunchmoney.Transaction
 	for _, trx := range transactions {
 		convertedTrxs = append(convertedTrxs, &lunchmoney.Transaction{
@@ -49,7 +48,7 @@ func main() {
 			CategoryID:  0,
 			Payee:       trx.Description,
 			Currency:    strings.ToLower(trx.CurrencyCode),
-			AssetID:     trx.Account.ID,
+			AssetID:     0, // TODO
 			RecurringID: 0,
 			Notes:       trx.RawDescription,
 			Status:      "",
@@ -58,15 +57,15 @@ func main() {
 		})
 
 		// TODO
-		if len(convertedTrxs) >= 10 {
+		if len(convertedTrxs) >= 11 {
 			break
 		}
 	}
 
-	err = lunchmoneyClient.InsertTransactions(ctx, convertedTrxs)
+	inserted, err := lunchmoneyClient.InsertTransactions(ctx, convertedTrxs)
 	if err != nil {
 		logger.Fatal("failure inserting transactions to lunchmoney", zap.Error(err))
 	}
 
-	logger.Info("inserted transactions", zap.Int("amount", len(convertedTrxs)))
+	logger.Info("inserted transactions", zap.Int("amount", inserted))
 }

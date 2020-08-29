@@ -19,8 +19,8 @@ func matchToAsset(assets []*lunchmoney.Asset, accounts []*accountWrapped, transa
 	}
 
 	for _, asset := range assets {
-		if strings.Contains(account.Account.Name, asset.Name) &&
-			strings.Contains(account.Bank.Name, asset.Name) {
+		if (strings.Contains(account.Account.Name, asset.Name) || strings.Contains(account.Account.Name, asset.InstitutionName)) &&
+			(strings.Contains(account.Bank.Name, asset.Name) || strings.Contains(account.Bank.Name, asset.InstitutionName)) {
 			return asset.ID
 		}
 	}

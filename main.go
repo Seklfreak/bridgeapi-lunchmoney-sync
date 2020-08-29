@@ -93,11 +93,6 @@ func main() {
 			ExternalID:  strconv.FormatInt(trx.ID, 10),
 			Tags:        []string{"bridgeapi-lunchmoney-sync"},
 		})
-
-		// TODO
-		if len(convertedTrxs) >= 100 {
-			break
-		}
 	}
 
 	// send to lunchmoney

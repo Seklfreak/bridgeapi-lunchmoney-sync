@@ -37,7 +37,6 @@ func main() {
 	if err != nil {
 		logger.Fatal("failure fetching lunchmoney assets", zap.Error(err))
 	}
-	_ = assets // TODO
 
 	// fetch bridge accounts
 	accounts, err := bridgeClient.FetchAccounts(ctx)
@@ -45,10 +44,7 @@ func main() {
 		logger.Fatal("failure fetching bridge accounts", zap.Error(err))
 	}
 
-	var accountsWrapped []struct {
-		Account *bridgeapi.Account
-		Bank    *bridgeapi.Bank
-	}
+	var accountsWrapped []*accountWrapped
 
 	// fetch bridge banks
 	for _, account := range accounts {
@@ -57,13 +53,8 @@ func main() {
 			logger.Fatal("failure fetching bridge bank", zap.Error(err), zap.Int("bank_id", account.Bank.ID))
 		}
 
-		accountsWrapped = append(accountsWrapped, struct {
-			Account *bridgeapi.Account
-			Bank    *bridgeapi.Bank
-		}{Account: account, Bank: bank})
+		accountsWrapped = append(accountsWrapped, &accountWrapped{Account: account, Bank: bank})
 	}
-
-	_ = accountsWrapped // TODO
 
 	// fetch updated in last seven days
 	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-7*24*time.Hour))
@@ -76,7 +67,14 @@ func main() {
 	// convert to lunchmoney transactions
 	var convertedTrxs []*lunchmoney.Transaction
 	var notes string
+	var assetID int
 	for _, trx := range transactions {
+		assetID = matchToAsset(assets, accountsWrapped, trx)
+		if assetID == 0 {
+			logger.Warn("failure matching transaction to asset", zap.Any("trx", trx))
+			continue
+		}
+
 		notes = ""
 		if !strings.EqualFold(trx.Description, trx.RawDescription) {
 			notes = trx.RawDescription
@@ -88,7 +86,7 @@ func main() {
 			CategoryID:  0,
 			Payee:       trx.Description,
 			Currency:    strings.ToLower(trx.CurrencyCode),
-			AssetID:     0, // TODO
+			AssetID:     assetID,
 			RecurringID: 0,
 			Notes:       notes,
 			Status:      "",
@@ -97,7 +95,7 @@ func main() {
 		})
 
 		// TODO
-		if len(convertedTrxs) >= 10 {
+		if len(convertedTrxs) >= 100 {
 			break
 		}
 	}

@@ -74,19 +74,19 @@ type TransactionsContainer struct {
 }
 
 type Transaction struct {
-	ID             int64     `json:"id"`
-	ResourceURI    string    `json:"resource_uri"`
-	ResourceType   string    `json:"resource_type"`
-	Description    string    `json:"description"`
-	RawDescription string    `json:"raw_description"`
-	Amount         float64   `json:"amount"`
-	Date           string    `json:"date"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	CurrencyCode   string    `json:"currency_code"`
-	IsDeleted      bool      `json:"is_deleted"`
-	Category       Category  `json:"category"`
-	Account        Account   `json:"account"`
-	IsFuture       bool      `json:"is_future"`
+	ID             int64              `json:"id"`
+	ResourceURI    string             `json:"resource_uri"`
+	ResourceType   string             `json:"resource_type"`
+	Description    string             `json:"description"`
+	RawDescription string             `json:"raw_description"`
+	Amount         float64            `json:"amount"`
+	Date           string             `json:"date"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	CurrencyCode   string             `json:"currency_code"`
+	IsDeleted      bool               `json:"is_deleted"`
+	Category       Category           `json:"category"`
+	Account        TransactionAccount `json:"account"`
+	IsFuture       bool               `json:"is_future"`
 }
 
 type Category struct {
@@ -95,7 +95,7 @@ type Category struct {
 	ResourceType string `json:"resource_type"`
 }
 
-type Account struct {
+type TransactionAccount struct {
 	ID           int    `json:"id"`
 	ResourceURI  string `json:"resource_uri"`
 	ResourceType string `json:"resource_type"`

@@ -39,6 +39,13 @@ func main() {
 	}
 	_ = assets
 
+	// fetch bridge accounts
+	accounts, err := bridgeClient.FetchAccounts(ctx)
+	if err != nil {
+		logger.Fatal("failure fetching bridge accounts", zap.Error(err))
+	}
+	_ = accounts
+
 	// fetch updated in last seven days
 	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-7*24*time.Hour))
 	if err != nil {

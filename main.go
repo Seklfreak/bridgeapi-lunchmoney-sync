@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Seklfreak/bridgeapi-lunchmoney-sync/bridgeapi"
+	"github.com/Seklfreak/bridgeapi-lunchmoney-sync/lunchmoney"
 	"go.uber.org/zap"
 )
 
@@ -14,6 +18,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	ctx := context.Background()
 
 	bridgeClient, err := bridgeapi.NewClient(&http.Client{}, &bridgeapi.Auth{
 		ClientID:     os.Getenv("BRIDGEAPI_CLIENT_ID"),
@@ -25,6 +30,8 @@ func main() {
 		logger.Fatal("failure initialising bridge client", zap.Error(err))
 	}
 
+	lunchmoneyClient := lunchmoney.NewClient(&http.Client{}, os.Getenv("LUNCHMONEY_ACCESS_TOKEN"))
+
 	// fetch updated in last seven days
 	transactions, err := bridgeClient.FetchTransactionsUpdated(time.Now().Add(-7 * 24 * time.Hour))
 	if err != nil {
@@ -32,4 +39,34 @@ func main() {
 	}
 
 	logger.Info("received transactions", zap.Int("amount", len(transactions)))
+
+	// TODO: match asset ID with assets on LunchMoney
+	var convertedTrxs []*lunchmoney.Transaction
+	for _, trx := range transactions {
+		convertedTrxs = append(convertedTrxs, &lunchmoney.Transaction{
+			Date:        trx.Date,
+			Amount:      trx.Amount,
+			CategoryID:  0,
+			Payee:       trx.Description,
+			Currency:    strings.ToLower(trx.CurrencyCode),
+			AssetID:     trx.Account.ID,
+			RecurringID: 0,
+			Notes:       trx.RawDescription,
+			Status:      "",
+			ExternalID:  strconv.FormatInt(trx.ID, 10),
+			Tags:        []string{"bridgeapi-lunchmoney-sync"},
+		})
+
+		// TODO
+		if len(convertedTrxs) >= 10 {
+			break
+		}
+	}
+
+	err = lunchmoneyClient.InsertTransactions(ctx, convertedTrxs)
+	if err != nil {
+		logger.Fatal("failure inserting transactions to lunchmoney", zap.Error(err))
+	}
+
+	logger.Info("inserted transactions", zap.Int("amount", len(convertedTrxs)))
 }

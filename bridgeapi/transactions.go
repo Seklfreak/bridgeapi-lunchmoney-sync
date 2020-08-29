@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// TODO: context
 func (c *Client) fetchTransactions(endpoint string) (*TransactionsContainer, error) {
 	req, err := c.createRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -38,6 +39,7 @@ func (c *Client) fetchTransactions(endpoint string) (*TransactionsContainer, err
 	return &transactions, nil
 }
 
+// TODO: context
 func (c *Client) FetchTransactionsUpdated(since time.Time) ([]*Transaction, error) {
 	var transactions []*Transaction
 
@@ -46,7 +48,6 @@ func (c *Client) FetchTransactionsUpdated(since time.Time) ([]*Transaction, erro
 		if endpoint == "" {
 			vars := url.Values{}
 			vars.Set("since", since.UTC().Format(time.RFC3339))
-			vars.Set("limit", "500")
 
 			endpoint = "/v2/transactions/updated?" + vars.Encode()
 		}

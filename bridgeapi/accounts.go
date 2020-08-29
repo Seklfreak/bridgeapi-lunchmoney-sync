@@ -82,7 +82,7 @@ type Account struct {
 	Type                  string      `json:"type"`
 	CurrencyCode          string      `json:"currency_code"`
 	Item                  Item        `json:"item"`
-	Bank                  Bank        `json:"bank"`
+	Bank                  AccountBank `json:"bank"`
 	LoanDetails           interface{} `json:"loan_details"`
 	SavingsDetails        interface{} `json:"savings_details"`
 	IsPro                 bool        `json:"is_pro"`
@@ -97,7 +97,7 @@ type Item struct {
 	ResourceType string `json:"resource_type"`
 }
 
-type Bank struct {
+type AccountBank struct {
 	ID           int    `json:"id"`
 	ResourceURI  string `json:"resource_uri"`
 	ResourceType string `json:"resource_type"`

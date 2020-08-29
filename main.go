@@ -37,14 +37,33 @@ func main() {
 	if err != nil {
 		logger.Fatal("failure fetching lunchmoney assets", zap.Error(err))
 	}
-	_ = assets
+	_ = assets // TODO
 
 	// fetch bridge accounts
 	accounts, err := bridgeClient.FetchAccounts(ctx)
 	if err != nil {
 		logger.Fatal("failure fetching bridge accounts", zap.Error(err))
 	}
-	_ = accounts
+
+	var accountsWrapped []struct {
+		Account *bridgeapi.Account
+		Bank    *bridgeapi.Bank
+	}
+
+	// fetch bridge banks
+	for _, account := range accounts {
+		bank, err := bridgeClient.FetchBank(ctx, account.Bank.ID)
+		if err != nil {
+			logger.Fatal("failure fetching bridge bank", zap.Error(err), zap.Int("bank_id", account.Bank.ID))
+		}
+
+		accountsWrapped = append(accountsWrapped, struct {
+			Account *bridgeapi.Account
+			Bank    *bridgeapi.Bank
+		}{Account: account, Bank: bank})
+	}
+
+	_ = accountsWrapped // TODO
 
 	// fetch updated in last seven days
 	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-7*24*time.Hour))

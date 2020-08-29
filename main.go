@@ -41,7 +41,13 @@ func main() {
 	logger.Info("received transactions", zap.Int("amount", len(transactions)))
 
 	var convertedTrxs []*lunchmoney.Transaction
+	var notes string
 	for _, trx := range transactions {
+		notes = ""
+		if !strings.EqualFold(trx.Description, trx.RawDescription) {
+			notes = trx.RawDescription
+		}
+
 		convertedTrxs = append(convertedTrxs, &lunchmoney.Transaction{
 			Date:        trx.Date,
 			Amount:      trx.Amount,
@@ -50,14 +56,14 @@ func main() {
 			Currency:    strings.ToLower(trx.CurrencyCode),
 			AssetID:     0, // TODO
 			RecurringID: 0,
-			Notes:       trx.RawDescription,
+			Notes:       notes,
 			Status:      "",
 			ExternalID:  strconv.FormatInt(trx.ID, 10),
 			Tags:        []string{"bridgeapi-lunchmoney-sync"},
 		})
 
 		// TODO
-		if len(convertedTrxs) >= 11 {
+		if len(convertedTrxs) >= 10 {
 			break
 		}
 	}

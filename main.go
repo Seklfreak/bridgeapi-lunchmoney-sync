@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,6 +15,9 @@ import (
 )
 
 var tags = []string{"bridgeapi-lunchmoney-sync"}
+
+// const timeframe = 7 * 24 * time.Hour // TODO
+const timeframe = 8 * time.Hour
 
 func main() {
 	logger, err := zap.NewDevelopment()
@@ -59,20 +63,24 @@ func main() {
 	}
 
 	// fetch updated in last seven days
-	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-7*24*time.Hour))
+	transactions, err := bridgeClient.FetchTransactionsUpdated(ctx, time.Now().Add(-timeframe))
 	if err != nil {
 		logger.Fatal("failure fetching transactions from bridge", zap.Error(err))
 	}
 
 	logger.Info("received transactions", zap.Int("amount", len(transactions)))
 
+	if len(transactions) <= 0 {
+		return
+	}
+
 	// convert to lunchmoney transactions
 	var convertedTrxs []*lunchmoney.Transaction
 	var notes string
-	var assetID int
+	var asset *lunchmoney.Asset
 	for _, trx := range transactions {
-		assetID = matchToAsset(assets, accountsWrapped, trx)
-		if assetID == 0 {
+		asset = machTransactionToAsset(assets, accountsWrapped, trx)
+		if asset == nil {
 			logger.Warn("failure matching transaction to asset", zap.Any("trx", trx))
 			continue
 		}
@@ -87,7 +95,7 @@ func main() {
 			Amount:     trx.Amount,
 			Payee:      trx.Description,
 			Currency:   strings.ToLower(trx.CurrencyCode),
-			AssetID:    assetID,
+			AssetID:    asset.ID,
 			Notes:      notes,
 			ExternalID: strconv.FormatInt(trx.ID, 10),
 			Tags:       tags,
@@ -98,6 +106,27 @@ func main() {
 	inserted, err := lunchmoneyClient.InsertTransactions(ctx, convertedTrxs)
 	if err != nil {
 		logger.Fatal("failure inserting transactions to lunchmoney", zap.Error(err))
+	}
+
+	for _, account := range accountsWrapped {
+		asset = matchAccountToAsset(assets, account)
+		if asset == nil {
+			logger.Warn("failure matching account to asset", zap.Any("account", account))
+			continue
+		}
+
+		err = lunchmoneyClient.UpdateAsset(ctx, asset.ID, &lunchmoney.Asset{
+			Balance: fmt.Sprintf("%.2f", account.Account.Balance),
+		})
+		if err != nil {
+			logger.Fatal("failure updating account balance", zap.Error(err))
+		}
+
+		logger.Info("updated asset balance",
+			zap.String("asset_name", asset.Name),
+			zap.String("asset_institution", asset.InstitutionName),
+			zap.Float64("balance", account.Account.Balance),
+		)
 	}
 
 	logger.Info("inserted transactions", zap.Int("amount", inserted))
